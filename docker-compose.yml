@@ -1,0 +1,23 @@
+services:
+  moodle-course-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: moodle-course-studio:latest
+    container_name: moodle-course-studio
+    restart: unless-stopped
+    ports:
+      - "8098:8098"
+    environment:
+      # Servidor MCP al que se proxya (moodle-ia-mcp). Ajustar al host real.
+      MCP_URL: ${MCP_URL:-http://moodle-ia-mcp:8097/mcp}
+      MOODLE_PUBLIC_URL: ${MOODLE_PUBLIC_URL:-https://moodle.neuropedialab.org}
+      CALL_TIMEOUT: ${CALL_TIMEOUT:-1800}
+    volumes:
+      - ./data:/data/jobs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8098/api/health',timeout=8)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3

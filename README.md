@@ -48,6 +48,22 @@ Sin dependencias externas: `server.py` usa solo la stdlib (`http.server`, `urlli
 
 ## Rebuild
 
+Este repositorio es la copia autónoma del plugin (extraída de `ia-services-gpu-stack`
+con su historial). Dos formas de ejecutarlo:
+
+**Autónoma (este repo):**
+
+```bash
+cd moodle-course-studio
+docker compose up -d --build
+curl -s localhost:8098/api/health
+```
+
+`docker-compose.yml` deja `MCP_URL` apuntando a `moodle-ia-mcp`:8097; hay que
+publicarlo en la misma red o exportar `MCP_URL` con la URL real del servidor MCP.
+
+**Dentro del stack completo:**
+
 ```bash
 cd /home/arkantu/produccion/ia-services-stack
 docker compose build moodle-course-studio
