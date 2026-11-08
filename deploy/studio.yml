@@ -1,0 +1,46 @@
+# Moodle Course Studio en el swarm de Raspberry Pi (stack `moodle-studio`).
+#
+#   docker stack deploy -c studio.yml moodle-studio
+#
+# No genera contenido por sí mismo: es el proxy JSON-RPC y el orquestador de
+# jobs del MCP `moodle-ia-mcp` (192.168.0.100:8097), y escribe los borradores
+# y el historial en /data/jobs.
+version: "3.8"
+
+services:
+  studio:
+    image: 192.168.0.101:5555/moodle/studio:1.0.0
+    environment:
+      MCP_URL: http://192.168.0.100:8097/mcp
+      MOODLE_PUBLIC_URL: https://moodle.pediatriapeset.org
+      DATA_DIR: /data/jobs
+      CALL_TIMEOUT: "1800"
+      PORT: "8098"
+      TZ: Europe/Madrid
+    volumes:
+      # historial de jobs y borradores: en el SSD del nodo, no en la SD
+      - /mnt/docker-ssd/moodle-studio/jobs:/data/jobs
+    ports:
+      - target: 8098
+        published: 8098
+        protocol: tcp
+        mode: ingress
+    networks: [studio]
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.hostname == raspberrypi5-4-hailo]
+      resources:
+        limits: {memory: 256M}
+      restart_policy: {condition: on-failure, delay: 10s}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8098/api/health',timeout=8)"]
+      interval: 30s
+      timeout: 15s
+      start_period: 15s
+      retries: 3
+
+networks:
+  studio:
+    driver: overlay
+    attachable: true

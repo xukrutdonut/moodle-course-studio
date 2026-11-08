@@ -46,6 +46,26 @@ Si el modelo devuelve un XML no parseable, el job **no pierde la generación**: 
 
 Sin dependencias externas: `server.py` usa solo la stdlib (`http.server`, `urllib`, `threading`).
 
+## Despliegue en el swarm de Raspberry Pi (stack `moodle-studio`)
+
+Corre como servicio del swarm en el nodo con SSD, apuntando al MCP que vive en
+`192.168.0.100:8097` y con el historial de jobs en el SSD (no en la microSD):
+
+```bash
+scripts/build-image.sh     # build arm64 en .80 + push a 192.168.0.101:5555/moodle/studio
+scripts/deploy-stack.sh    # crea /mnt/docker-ssd/moodle-studio/jobs y despliega en .105
+curl -s http://192.168.0.105:8098/api/health
+```
+
+`deploy/studio.yml` fija los valores reales: `MCP_URL=http://192.168.0.100:8097/mcp`,
+`MOODLE_PUBLIC_URL=https://moodle.pediatriapeset.org`, `DATA_DIR=/data/jobs`
+(bind a `/mnt/docker-ssd/moodle-studio/jobs`), puerto 8098 en modo ingress y
+constraint al nodo `raspberrypi5-4-hailo`.
+
+Ojo: el studio **no** genera contenido ni habla con Moodle por su cuenta; todo pasa
+por el MCP. Si `/api/health` devuelve `mcp: false`, el problema está en
+`192.168.0.100:8097`, no en el contenedor.
+
 ## Rebuild
 
 Este repositorio es la copia autónoma del plugin (extraída de `ia-services-gpu-stack`
